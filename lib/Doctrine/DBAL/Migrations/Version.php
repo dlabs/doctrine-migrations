@@ -239,6 +239,7 @@ class Version
 
             $this->state = self::STATE_PRE;
             $fromSchema = $this->sm->createSchema();
+            $this->migration->{'preStart'}();
             $this->migration->{'pre' . ucfirst($direction)}($fromSchema);
 
             if ($direction === 'up') {

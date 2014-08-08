@@ -63,6 +63,11 @@ EOT
         $configuration = $this->getMigrationConfiguration($input, $output);
 
         $em = $this->getHelper('em')->getEntityManager();
+        $emPrefix= '';
+        $emName = ( $input->hasOption('em') ? $input->getOption('em') : '');
+        if($emName){
+            $emPrefix = sprintf('[<info>EM:</info><comment>%s</comment>] ', $emName);
+        }
         $conn = $em->getConnection();
         $platform = $conn->getDatabasePlatform();
         $metadata = $em->getMetadataFactory()->getAllMetadata();
@@ -102,15 +107,15 @@ EOT
         $down = $this->buildCodeFromSql($configuration, $fromSchema->getMigrateFromSql($toSchema, $platform));
 
         if ( ! $up && ! $down) {
-            $output->writeln('No changes detected in your mapping information.', 'ERROR');
+            $output->writeln($emPrefix.'No changes detected in your mapping information.', 'ERROR');
 
             return;
         }
 
-        $version = date('YmdHis');
-        $path = $this->generateMigration($configuration, $input, $version, $up, $down);
+        $version = date('YmdHis').'_'.$emName;
+        $path = $this->generateMigration($configuration, $input, $version, $up, $down, $emName);
 
-        $output->writeln(sprintf('Generated new migration class to "<info>%s</info>" from schema differences.', $path));
+        $output->writeln(sprintf($emPrefix.'Generated new migration class to "<info>%s</info>" from schema differences.', $path));
     }
 
     private function buildCodeFromSql(Configuration $configuration, array $sql)

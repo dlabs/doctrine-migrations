@@ -27,6 +27,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\DependencyInjection\Container;
 
 /**
  * CLI Command for adding and deleting migration versions from the version table.
@@ -63,6 +64,11 @@ abstract class AbstractCommand extends Command
     public function setMigrationConfiguration(Configuration $config)
     {
         $this->configuration = $config;
+    }
+
+    public function resetMigrationConfiguration()
+    {
+        $this->configuration = null;
     }
 
     /**
@@ -121,5 +127,39 @@ abstract class AbstractCommand extends Command
         }
 
         return $this->configuration;
+    }
+
+    /**
+     * @return Container
+     */
+    protected function getContainer()
+    {
+        return $this->getApplication()->getKernel()->getContainer();
+    }
+
+    protected $excludeParameterName = '';
+
+    /**
+     * Gets the entityManagers without the exclude ones
+     *
+     * @return mixed
+     */
+    protected function getEntityManagers()
+    {
+        $entityManagers = $this->getContainer()->get('doctrine')->getManagerNames();
+
+        if($this->excludeParameterName && $this->getContainer()->hasParameter($this->excludeParameterName)){
+
+            $excludeManagers = $this->getContainer()->getParameter($this->excludeParameterName);
+
+            foreach ($excludeManagers as $excludeManager) {
+                if(isset($entityManagers[$excludeManager])){
+                    unset($entityManagers[$excludeManager]);
+                }
+            }
+        }
+
+
+        return $entityManagers;
     }
 }
